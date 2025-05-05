@@ -13,7 +13,7 @@ df_uk_density_2011 = pd.read_csv("data/uk_density_2011.csv")
 with open("data/Local_Authority_Districts_May_2024_Boundaries_UK.geojson", "r") as f:
     geojson = json.load(f)
 
-# Streamlit user input to select the year
+# Streamlit user input options
 st.sidebar.title('Options')
 year = st.sidebar.selectbox("Select Year:", [2011, 2022])
 
@@ -37,6 +37,7 @@ fig = px.choropleth_map(
     zoom=4
 )
 
+# Updating the hover template for the choropleth map. 
 fig.update_traces(
     hovertemplate="""
     <br><b>%{customdata[0]}</b><br>
@@ -47,7 +48,7 @@ fig.update_traces(
     """
 )
 
-# Updating layout for the choropleth map 
+# Updating layout for the choropleth map. 
 fig.update_layout(
      title={
         'text': f"UK Population by Local Authority District - {year}",
@@ -64,7 +65,7 @@ fig.update_layout(
     margin={"r": 150, "t": 50, "l": 0, "b": 0}
 )
 
-# Display the map
+# Display the choropleth map
 st.plotly_chart(fig, use_container_width=True)
 
-# Execute streamlit run uk_population_map.py on the terminal
+# Execute 'streamlit run uk_population_map.py' on the terminal
