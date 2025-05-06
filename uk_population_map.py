@@ -6,8 +6,8 @@ import streamlit as st
 import json
 
 # Loading the dataset based on the uk density for 2022 and 2011
-df_uk_density_2022 = pd.read_csv("data/uk_density_2022.csv")
-df_uk_density_2011 = pd.read_csv("data/uk_density_2011.csv")
+df_uk_density_2022 = pd.read_csv("data/df_uk_population_density_2022.csv")
+df_uk_density_2011 = pd.read_csv("data/df_uk_population_density_2011.csv")
 
 # Loading the GeoJSON file for the UK boundaries
 with open("data/Local_Authority_Districts_May_2024_Boundaries_UK.geojson", "r") as f:
