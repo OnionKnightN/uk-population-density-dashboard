@@ -7,6 +7,11 @@ import json
 # Setting the page layout
 st.set_page_config(layout="wide")
 
+# Setting sidebar title
+st.title("Interactive Dashboard - UK Population Density")
+
+###### Loading Data for Choropleth Map Start ######
+
 # Loading the datasets for 2022 and 2011
 df_uk_density_2022 = pd.read_csv("data/df_uk_population_density_2022.csv")
 df_uk_density_2011 = pd.read_csv("data/df_uk_population_density_2011.csv")
@@ -15,10 +20,12 @@ df_uk_density_2011 = pd.read_csv("data/df_uk_population_density_2011.csv")
 with open("data/Local_Authority_Districts_May_2024_Boundaries_UK.geojson", "r") as f:
     geojson = json.load(f)
 
+###### Loading Data for Choropleth Map Start ######
+
 ######  Streamlit Sidebar Controls Start ######
 
 # Setting sidebar title
-st.sidebar.title("UK Population Density Map")
+st.sidebar.title("Control Panel")
 
 # Year selection (2022 or 2011)
 year_options = [2022, 2011]
@@ -92,6 +99,13 @@ if selected_gender == 'Both Genders' and selected_age_group != 'All':
 else:
     population_label = population_column.replace('_', ' ').title()
 
+if selected_gender == 'Female':
+    colour = px.colors.sequential.Magma
+elif selected_gender == 'Male':
+    colour = px.colors.sequential.BuPu[2:]
+else:
+    colour = px.colors.sequential.Greys[2:]
+
 # Adjust custom_data based on the population_column 
 custom_data = ['name', 'code', 'area_sq_km', population_column]
 
@@ -106,11 +120,11 @@ fig = px.choropleth_map(
     locations='code',
     color=density_column,
     featureidkey="properties.LAD24CD",
-    color_continuous_scale=px.colors.sequential.Magma,
+    color_continuous_scale=colour,
     center={"lat": 55.09, "lon": -4.03},
     custom_data=custom_data,
     labels={density_column:'Population<br>Density'},
-    zoom=4.8
+    zoom=4.6
 )
 
 # Updating the hover template for the choropleth map
@@ -125,12 +139,18 @@ fig.update_traces(
 
 # Updating layout for the choropleth map
 fig.update_layout(
-    height=800,
+    height=650,
     title={
-        'text': f"UK Population Density by Local Authority District {selected_year} - {selected_gender} - {age_group_option}",
+        'text': f"UK Population Density {selected_year} - {selected_gender} - {age_group_option}",
+        'y': 0.98,
+        'font': dict(size=24),
         'xanchor': 'left',
         'yanchor': 'top'
     },
+    coloraxis_colorbar=dict(
+        title_font=dict(size=18),
+        tickfont=dict(size=16),
+    ),
     hoverlabel=dict(
         bgcolor="white",
         font_size=14,
@@ -141,7 +161,102 @@ fig.update_layout(
 
 ###### Create Choropleth Map End ######
 
-# Display the choropleth map
-st.plotly_chart(fig, use_container_width=True)
+
+###### Loading Data for Bar Chart Start ######
+
+# Loading the datasets for population for bar chart 
+df_uk_population = pd.read_csv("data/df_uk_population.csv")
+# Convert selected_year to string for column access
+year_str = str(selected_year)
+# Select appropriate population column based on year
+df_uk_population["population"] = df_uk_population[f"population_{year_str}"]
+
+###### Loading Data for Bar Chart End ######
+
+###### Gender Title and Filtering Start ######
+
+# Dynamoc gender title based on selected gender
+gender_title = selected_gender if selected_gender != "Both Genders" else "Both Genders"
+
+# Mapping the gender names to their respective abbreviations for filtering
+gender_filter_map = {
+    "Male": "M",
+    "Female": "F"
+}
+
+# Filter the dataframe for the selected gender
+if selected_gender in gender_filter_map:
+    df_uk_population = df_uk_population[df_uk_population["sex"] == gender_filter_map[selected_gender]]
+
+###### Gender Title and Filtering End ######
+
+###### Grouping Population Data by Age Start ######
+
+# Group by age
+df_age_grouped = df_uk_population.groupby("age")["population"].sum().reset_index()
+
+###### Grouping Population Data by Age End ######
+
+###### Create Bar Chart Start ######
+
+# Create bar chart
+bar_fig = px.bar(
+    df_age_grouped,
+    x="age",
+    y="population",
+    labels={"age": "Age", "population": "Population"},
+    hover_data={"age": True, "population": True}
+)
+
+# Updating layout for the bar chart 
+bar_fig.update_layout(
+    title={
+        'text': f"UK Population by Age {year_str} - {gender_title}",
+        'font': dict(size=24),
+        'xanchor': 'left',
+        'yanchor': 'top'
+    },
+    yaxis=dict(
+        title_font=dict(size=18),  
+        tickfont=dict(size=16)  
+    ),
+    xaxis=dict(
+        title_font=dict(size=18), 
+        tickfont=dict(size=16) 
+    ),
+    bargap=0.2
+)
+
+###### Create Bar Chart End ######
+
+###### Bar Color Customization Start ######
+
+# Gender to color mapping
+gender_color_map = {
+    "Male": "#9ebcda",   
+    "Female": "#000004",
+    "Both Genders": "#bdbdbd"
+}
+
+# Defining the bar color based on selected gender
+bar_color = gender_color_map.get(selected_gender, "#7f7f7f")
+
+# Applying the selected bar color to the chart
+bar_fig.update_traces(marker_color=bar_color)
+
+###### Bar Color Customization End ######
+
+###### Main Visualization Container Start ######
+
+# Main visualization container
+with st.container():
+
+    # Display the bar chart  
+    st.plotly_chart(bar_fig, use_container_width=True)
+
+    # Display the choropleth map
+    st.plotly_chart(fig, use_container_width=True)
+
+###### Main Visualization Container End ######
 
 # Execute 'streamlit run dashboard_interactive_visualisation.py' on the terminal
