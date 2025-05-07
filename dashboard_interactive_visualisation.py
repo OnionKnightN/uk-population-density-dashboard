@@ -17,7 +17,7 @@ df_uk_density_2022 = pd.read_csv("data/df_uk_population_density_2022.csv")
 df_uk_density_2011 = pd.read_csv("data/df_uk_population_density_2011.csv")
 
 # Loading the GeoJSON file for the UK boundaries
-with open("data/Local_Authority_Districts_May_2024_Boundaries_UK.geojson", "r") as f:
+with open("data/local_authority_districts_may_2024_boundaries_uk.geojson", "r") as f:
     geojson = json.load(f)
 
 ###### Loading Data for Choropleth Map Start ######
@@ -93,12 +93,15 @@ else:
 density_column = get_density_column(selected_gender, selected_age_group)
 population_column = get_population_column(selected_gender, selected_age_group, df_selected)
 
-# Population label for the selected columns
+# Population and density label for the selected columns
 if selected_gender == 'Both Genders' and selected_age_group != 'All':
     population_label = "Population"
+    density_label = "Person"
 else:
     population_label = population_column.replace('_', ' ').title()
+    density_label = density_column.replace('_', ' ').replace('per sq km', '').strip().title()
 
+# Changing colour scheme based on selected gender.
 if selected_gender == 'Female':
     colour = px.colors.sequential.Magma
 elif selected_gender == 'Male':
@@ -107,7 +110,7 @@ else:
     colour = px.colors.sequential.Greys[2:]
 
 # Adjust custom_data based on the population_column 
-custom_data = ['name', 'code', 'area_sq_km', population_column]
+custom_data = ['name', 'code', 'area_sq_km', population_column, density_column]
 
 ###### Data Selection Start ######
 
@@ -133,7 +136,8 @@ fig.update_traces(
     <br><b>%{{customdata[0]}}</b><br>
     <br><b>Code: </b> %{{customdata[1]}}
     <br><b>Area per km²: </b> %{{customdata[2]:.0f}}
-    <br><b>{population_label}: </b> %{{customdata[3]:.0f}}<br>
+    <br><b>{population_label}: </b> %{{customdata[3]:.0f}}
+    <br><b>{density_label} per km²: </b> %{{customdata[4]:.2f}}<br>
     """
 )
 
@@ -141,7 +145,7 @@ fig.update_traces(
 fig.update_layout(
     height=650,
     title={
-        'text': f"UK Population Density {selected_year} - {selected_gender} - {age_group_option}",
+        'text': f"UK Population Density Mid-{selected_year} - {selected_gender} - {age_group_option}",
         'y': 0.98,
         'font': dict(size=24),
         'xanchor': 'left',
@@ -211,7 +215,7 @@ bar_fig = px.bar(
 # Updating layout for the bar chart 
 bar_fig.update_layout(
     title={
-        'text': f"UK Population by Age {year_str} - {gender_title}",
+        'text': f"UK Population by Age Mid-{year_str} - {gender_title}",
         'font': dict(size=24),
         'xanchor': 'left',
         'yanchor': 'top'
